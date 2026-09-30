@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Chat - Dark Emerald</title>
+    <style>
+        /* Renk Paleti ve Değişkenler */
+        :root { 
+            --primary: #2ecc71; /* Canlı Yeşil */
+            --bg-dark: #0b141a; /* WhatsApp Karanlık Mod Arka Plan */
+            --surface: #111b21; /* Kart/Header Arka Plan */
+            --text-main: #e9edef; 
+            --text-dim: #8696a0;
+            --sent-bubble: #005c4b; /* Koyu Yeşil Baloncuk */
+            --received-bubble: #202c33; /* Gri/Mavi Baloncuk */
+            --accent-red: #ff5e5e;
+        }
+
+        body { 
+            background: white; 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        
+        /* Telefon Çerçevesi */
+        .phone { 
+            width: 360px; 
+            height: 740px; 
+            background: var(--bg-dark); 
+            border: 12px solid #222; 
+            border-radius: 45px; 
+            position: relative; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            box-shadow: 0 40px 100px rgba(0,0,0,0.5); 
+        }
+
+        /* Üst Header */
+        .phone-header { 
+            background: var(--surface); 
+            padding: 40px 20px 15px; 
+            text-align: center; 
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: var(--primary);
+            font-size: 20px;
+            letter-spacing: 1px;
+        }
+
+        /* Mod Seçici */
+        .mode-selector { 
+            display: flex; 
+            gap: 10px; 
+            padding: 15px; 
+            background: var(--bg-dark); 
+        }
+
+        .mode-btn { 
+            flex: 1; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            font-weight: 600; 
+            background: var(--received-bubble);
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        .active-mode { 
+            background: var(--primary); 
+            color: #000; 
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        /* Mesaj Alanı */
+        .chat-area { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-blend-mode: overlay;
+            background-color: var(--bg-dark);
+        }
+
+        .msg-bubble { 
+            padding: 10px 14px; 
+            border-radius: 12px; 
+            max-width: 80%; 
+            font-size: 14.5px; 
+            line-height: 1.4;
+            position: relative;
+            color: var(--text-main);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .sent { 
+            align-self: flex-end; 
+            background: var(--sent-bubble); 
+            border-top-right-radius: 2px;
+        }
+
+        .received { 
+            align-self: flex-start; 
+            background: var(--received-bubble); 
+            border-top-left-radius: 2px;
+        }
+
+        /* Şifreli Metin */
+        .cipher-text { 
+            font-family: 'Courier New', monospace; 
+            color: var(--primary); 
+            font-size: 11px; 
+            background: rgba(0,0,0,0.3);
+            padding: 6px;
+            border-radius: 4px;
+            margin: 5px 0;
+            display: block;
+            word-break: break-all;
+        }
+
+        /* Giriş Alanı */
+        .input-area { 
+            padding: 15px; 
+            background: var(--surface);
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
+
+        input { 
+            padding: 12px 18px; 
+            border: none; 
+            border-radius: 12px; 
+            outline: none; 
+            font-size: 14px;
+            background: #2a3942;
+            color: white;
+        }
+
+        input::placeholder { color: var(--text-dim); }
+
+        button.send-btn { 
+            background: var(--primary); 
+            color: #000; 
+            border: none; 
+            padding: 14px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-weight: bold;
+            font-size: 15px;
+            transition: transform 0.2s;
+        }
+
+        button.send-btn:active { transform: scale(0.98); }
+
+        /* Çözme Butonu */
+        .decrypt-btn {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 11px;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+
+        .status-msg { 
+            font-size: 12px; 
+            color: var(--primary); 
+            text-align: center; 
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="phone">
+    <div class="phone-header">
+        <strong>💭 SENTRA </strong>
+    </div>
+
+    <div class="mode-selector">
+        <button id="btnSender" class="mode-btn active-mode" onclick="setMode('sender')">Gönderici</button>
+        <button id="btnReceiver" class="mode-btn" onclick="setMode('receiver')">Alıcı</button>
+    </div>
+
+    <div id="chatArea" class="chat-area"></div>
+
+    <div id="inputSection" class="input-area">
+        <div id="statusMsg" class="status-msg">✔ Mesaj şifrelendi ve iletildi.</div>
+        <input type="text" id="targetUser" placeholder="Kime?">
+        <input type="text" id="messageInput" placeholder="Mesajınızı yazın...">
+        <button class="send-btn" onclick="handleAction()">İşlemi Tamamla</button>
+    </div>
+</div>
+
+<script>
+    // Mevcut mantığınızı buraya aynen ekleyebilirsiniz
+    let currentMode = 'sender';
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('btnSender').classList.toggle('active-mode', mode === 'sender');
+        document.getElementById('btnReceiver').classList.toggle('active-mode', mode === 'receiver');
+        
+        const targetInput = document.getElementById('targetUser');
+        const msgInput = document.getElementById('messageInput');
+        const btn = document.querySelector('.send-btn');
+        const chat = document.getElementById('chatArea');
+
+        chat.innerHTML = '';
+        if(mode === 'sender') {
+            targetInput.placeholder = "Kime?";
+            msgInput.style.display = "block";
+            btn.innerText = "Şifreli Gönder";
+        } else {
+            targetInput.placeholder = "Kendi Adınız";
+            msgInput.style.display = "none";
+            btn.innerText = "Gelen Mesajları Oku";
+        }
+    }
+
+    async function handleAction() {
+        if(currentMode === 'sender') {
+            await sendMessage();
+        } else {
+            await loadMessages();
+        }
+    }
+
+    async function sendMessage() {
+        const receiver = document.getElementById('targetUser').value;
+        const text = document.getElementById('messageInput').value;
+        if(!text) return;
+
+        const status = document.getElementById('statusMsg');
+
+        // Örnek API simülasyonu (Veri gönderimi kısmını korudum)
+        try {
+            const response = await fetch('/send', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ sender: 'gonderici', receiver: receiver, text: text })
+            });
+            const result = await response.json();
+            
+            const chat = document.getElementById('chatArea');
+            chat.innerHTML += `
+                <div class="msg-bubble sent">
+                    <small style="font-size: 10px; color: #aebac1;">Kilitli Veri:</small>
+                    <div class="cipher-text">${result.cipher}</div>
+                </div>
+            `;
+            
+            status.style.display = "block";
+            setTimeout(() => status.style.display = "none", 3000);
+            document.getElementById('messageInput').value = '';
+            chat.scrollTop = chat.scrollHeight;
+        } catch(e) {
+            console.log("Sunucu bağlantısı simüle ediliyor...");
+        }
+    }
+
+    async function loadMessages() {
+        const user = document.getElementById('targetUser').value;
+        const chat = document.getElementById('chatArea');
+        
+        try {
+            const res = await fetch('/read/' + user);
+            const msgs = await res.json();
+            chat.innerHTML = '';
+
+            msgs.forEach((m, index) => {
+                chat.innerHTML += `
+                    <div class="msg-bubble received">
+                        <div id="cipher-${index}" class="cipher-text">${m.cipher || '*** ENCRYPTED ***'}</div>
+                        <div id="plain-${index}" style="display:none;"><b style="color:var(--primary)">${m.from}:</b> ${m.message}</div>
+                        <button class="decrypt-btn" onclick="decryptMsg(${index})" id="btn-${index}">🔓 Şifreyi Çöz</button>
+                    </div>
+                `;
+            });
+        } catch(e) {
+            chat.innerHTML = '<div style="color:gray; text-align:center">Mesaj bulunamadı.</div>';
+        }
+    }
+
+    function decryptMsg(id) {
+        document.getElementById('cipher-' + id).style.display = 'none';
+        document.getElementById('plain-' + id).style.display = 'block';
+        document.getElementById('btn-' + id).style.display = 'none';
+    }
+</script>
+
+</body>
+</html>
